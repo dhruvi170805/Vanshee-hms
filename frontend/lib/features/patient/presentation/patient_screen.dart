@@ -1,0 +1,374 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/models/patient_model.dart';
+import '../../../core/providers/hms_provider.dart';
+import 'patient_dialog.dart';
+
+class PatientScreen extends StatefulWidget {
+  final int initialTabIndex;
+  const PatientScreen({super.key, this.initialTabIndex = 0});
+
+  @override
+  State<PatientScreen> createState() => _PatientScreenState();
+}
+
+class _PatientScreenState extends State<PatientScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: widget.initialTabIndex);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = Provider.of<HmsProvider>(context);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header & Add Patient button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Patient Management & Directory',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  const Text('Ayurvedic & Physiotherapy Clinical Registry • OPD Queues & Admitted Indoor IPD Records',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ],
+              ),
+              ElevatedButton.icon(
+                onPressed: () => PatientDialog.show(context),
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                label: const Text('Add New Patient'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Filters Bar
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: 320,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Search patient name, code (0-1-AYU), phone...',
+                      prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                      isDense: true,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onChanged: (val) => provider.setPatientSearch(val),
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: provider.patientDeptFilter.isEmpty ? '' : provider.patientDeptFilter,
+                  underline: const SizedBox(),
+                  items: const [
+                    DropdownMenuItem(value: '', child: Text('All Departments')),
+                    DropdownMenuItem(value: 'Ayurvedic', child: Text('🌿 Ayurvedic')),
+                    DropdownMenuItem(value: 'Physiotherapy', child: Text('⚡ Physiotherapy')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) provider.setPatientDeptFilter(val);
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: AppColors.primary),
+                  tooltip: 'Refresh patients',
+                  onPressed: () => provider.fetchPatients(),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Navigation Tabs: All Patients | OPD List | Indoor Patient List
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              indicatorWeight: 3,
+              isScrollable: true,
+              tabs: [
+                Tab(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.people_alt_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text('All Patients (${provider.patients.length})'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.meeting_room_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text('OPD List (${provider.opdPatients.length})'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    children: [
+                      const Icon(Icons.hotel_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Indoor Patient List (IPD) (${provider.indoorPatients.length})'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Tab View Content
+          SizedBox(
+            height: 580,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildPatientTable(context, provider, provider.patients),
+                _buildPatientTable(context, provider, provider.opdPatients),
+                _buildPatientTable(context, provider, provider.indoorPatients, isIndoor: true),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPatientTable(BuildContext context, HmsProvider provider, List<Patient> list, {bool isIndoor = false}) {
+    if (provider.isLoadingPatients && list.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (list.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.person_search_outlined, size: 48, color: AppColors.textMuted),
+            const SizedBox(height: 12),
+            Text(isIndoor ? 'No Indoor (IPD) Patients currently admitted' : 'No patients found',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 4),
+            Text(isIndoor
+                ? 'Register an Indoor Patient using the Add New Patient form.'
+                : 'Use "Add New Patient" to register Ayurvedic or Physiotherapy patients.'),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => PatientDialog.show(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Patient'),
+            )
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(AppColors.background),
+            columns: [
+              const DataColumn(label: Text('CODE', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('NAME & GENDER', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('AGE / WT (KG)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('PHONE (COMPULSORY)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('DEPARTMENT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              DataColumn(label: Text(isIndoor ? 'WARD / BED' : 'CATEGORY', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('CHIEF COMPLAINT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+              const DataColumn(label: Text('ACTIONS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+            ],
+            rows: list.map((p) {
+              final isAyu = p.department.toLowerCase().contains('ayu');
+
+              return DataRow(
+                cells: [
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isAyu ? AppColors.primaryLight : AppColors.accentLight,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        p.patientCode,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isAyu ? AppColors.primary : AppColors.accent,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                        Text('${p.gender} • ${p.bloodGroup.isNotEmpty ? p.bloodGroup : "Blood: —"}',
+                            style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      ],
+                    ),
+                  ),
+                  DataCell(Text('${p.age} yrs • ${p.weight} kg', style: const TextStyle(fontWeight: FontWeight.w500))),
+                  DataCell(
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_outlined, size: 14, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                        Text(p.phone, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                  DataCell(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isAyu ? Colors.green.withOpacity(0.12) : Colors.blue.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isAyu ? '🌿 Ayurvedic' : '⚡ Physiotherapy',
+                        style: TextStyle(
+                          color: isAyu ? Colors.green[800] : Colors.blue[800],
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    isIndoor
+                        ? Row(
+                            children: [
+                              const Icon(Icons.hotel_rounded, size: 16, color: Colors.purple),
+                              const SizedBox(width: 6),
+                              Text(p.wardBedNo.isNotEmpty ? p.wardBedNo : 'Admitted',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple, fontSize: 12)),
+                            ],
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(color: Colors.grey.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                            child: Text(p.patientType, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 180,
+                      child: Text(
+                        p.chiefComplaint.isNotEmpty ? p.chiefComplaint : (p.diagnosis.isNotEmpty ? p.diagnosis : 'Routine visit'),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                          tooltip: 'Edit',
+                          onPressed: () => PatientDialog.show(context, patient: p),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+                          tooltip: 'Delete',
+                          onPressed: () => _confirmDeletePatient(context, provider, p),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmDeletePatient(BuildContext context, HmsProvider provider, Patient p) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Patient?'),
+        content: Text('Are you sure you want to remove patient record for "${p.name}" (${p.patientCode})?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+            onPressed: () async {
+              try {
+                await provider.deletePatient(p.id);
+                Navigator.pop(ctx);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.danger));
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+}
