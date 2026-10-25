@@ -63,15 +63,18 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
     final kpi = stats;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Banner Welcome Header with "Add New Patient" quick button
           _buildHeaderBanner(context, provider),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // KPI Cards Row (Clinical & Pharmacy Metrics)
           LayoutBuilder(
@@ -171,7 +174,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
   Widget _buildHeaderBanner(BuildContext context, HmsProvider provider) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [AppColors.primaryDark, AppColors.primary],
@@ -187,40 +190,52 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           )
         ],
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.local_hospital, color: Colors.white, size: 26),
-                    SizedBox(width: 10),
-                    Text(
-                      'ST. MARY GENERAL HOSPITAL • AYURVEDIC & PHYSIOTHERAPY HMS',
-                      style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 0.8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 600;
+          final textSection = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.local_hospital, color: Colors.white, size: 22),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'ST. MARY GENERAL HOSPITAL • HMS',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: isWide ? 13 : 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Hospital Clinical & Pharmacy Dashboard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isWide ? 22 : 18,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Hospital Clinical & Pharmacy Dashboard',
-                  style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Manage Ayurvedic & Physiotherapy OPD queues, IPD beds, suppliers, purchase bills, and real-time medicine inventory.',
-                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Wrap(
-            spacing: 12,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Manage Ayurvedic & Physiotherapy OPD queues, IPD beds, suppliers, purchase bills, and real-time medicine inventory.',
+                style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: isWide ? 13 : 12),
+              ),
+            ],
+          );
+
+          final buttonSection = Wrap(
+            spacing: 10,
             runSpacing: 8,
             children: [
-              // Primary "Add New Patient" quick action on Dashboard
               ElevatedButton.icon(
                 onPressed: () => PatientDialog.show(context),
                 icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
@@ -228,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.primaryDark,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   elevation: 2,
                 ),
@@ -239,16 +254,37 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 label: const Text('Refresh', style: TextStyle(color: Colors.white)),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.white70),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
-          ),
-        ],
+          );
+
+          if (isWide) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: textSection),
+                const SizedBox(width: 16),
+                buttonSection,
+              ],
+            );
+          } else {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                textSection,
+                const SizedBox(height: 16),
+                buttonSection,
+              ],
+            );
+          }
+        },
       ),
     );
   }
+
 
   Widget _buildKpiCard({
     required String title,
@@ -316,32 +352,47 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with Title and "Add New Patient" shortcut
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.dashboard_customize_rounded, color: AppColors.primary, size: 22),
-                    SizedBox(width: 10),
-                    Text('Hospital Clinical Operations & Patient Queues',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => PatientDialog.show(context),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('Add Patient Form'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryLight,
-                    foregroundColor: AppColors.primary,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 560;
+              final titleRow = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.dashboard_customize_rounded, color: AppColors.primary, size: 22),
+                  SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      'Hospital Clinical Operations & Patient Queues',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
+                ],
+              );
+              final addBtn = ElevatedButton.icon(
+                onPressed: () => PatientDialog.show(context),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Patient Form'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryLight,
+                  foregroundColor: AppColors.primary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
-              ],
-            ),
+              );
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: isWide
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [Expanded(child: titleRow), const SizedBox(width: 12), addBtn],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [titleRow, const SizedBox(height: 10), addBtn],
+                      ),
+              );
+            },
           ),
 
           // Tabs
@@ -354,9 +405,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               indicatorColor: AppColors.primary,
               indicatorWeight: 3,
               isScrollable: true,
+              tabAlignment: TabAlignment.start,
               tabs: [
                 Tab(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.meeting_room, size: 16),
                       const SizedBox(width: 8),
@@ -366,15 +419,17 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
                 Tab(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.hotel, size: 16),
                       const SizedBox(width: 8),
-                      Text('Indoor Patient List (${indoorList.length})'),
+                      Text('Indoor IPD (${indoorList.length})'),
                     ],
                   ),
                 ),
                 Tab(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.people, size: 16),
                       const SizedBox(width: 8),
@@ -384,6 +439,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
                 Tab(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.calendar_month, size: 16),
                       const SizedBox(width: 8),
@@ -393,6 +449,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
                 Tab(
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.warning_amber, size: 16),
                       const SizedBox(width: 8),

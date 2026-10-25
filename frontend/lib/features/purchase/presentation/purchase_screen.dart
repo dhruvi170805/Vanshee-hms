@@ -12,41 +12,74 @@ class PurchaseScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<HmsProvider>(context);
 
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header & Add Purchase button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Purchase Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Manage procurement invoices, medicine batches, supplier payments, and inventory restock entries.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Purchase Master',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _showNewPurchaseDialog(context),
-                icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                label: const Text('New Purchase Entry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Invoices, medicine batches, supplier restock entries',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showNewPurchaseDialog(context),
+                    icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+                    label: const Text('New Purchase Entry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Purchase Master',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Manage procurement invoices, medicine batches, supplier payments, and inventory restock entries.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showNewPurchaseDialog(context),
+                  icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
+                  label: const Text('New Purchase Entry'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 24),
 
@@ -63,8 +96,11 @@ class PurchaseScreen extends StatelessWidget {
               runSpacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                SizedBox(
-                  width: 320,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: 200,
+                    maxWidth: isNarrow ? double.infinity : 320,
+                  ),
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Search invoice no, supplier name...',
@@ -266,12 +302,14 @@ class PurchaseScreen extends StatelessWidget {
           final discount = double.tryParse(discountCtrl.text) ?? 0.0;
           final grandTotal = subtotal + tax - discount;
 
+          final isMobileDialog = MediaQuery.of(ctx).size.width < 650;
+
           return Dialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 820, maxHeight: 750),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: EdgeInsets.all(isMobileDialog ? 14.0 : 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -282,7 +320,7 @@ class PurchaseScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.add_shopping_cart, color: AppColors.primary),
                             SizedBox(width: 10),
-                            Text('Record Medicine Purchase Bill', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            Text('Record Purchase Bill', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           ],
                         ),
                         IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
@@ -291,49 +329,95 @@ class PurchaseScreen extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // Top Row: Supplier, Invoice No, Payment Mode
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: DropdownButtonFormField<int>(
+                    // Top: Supplier, Invoice No, Payment Mode
+                    if (isMobileDialog)
+                      Column(
+                        children: [
+                          DropdownButtonFormField<int>(
                             value: selectedSupplierId,
                             decoration: InputDecoration(
                               labelText: 'Supplier *',
+                              isDense: true,
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             items: provider.suppliers.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, overflow: TextOverflow.ellipsis))).toList(),
                             onChanged: (val) => setModalState(() => selectedSupplierId = val!),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 1,
-                          child: TextFormField(
-                            controller: invoiceCtrl,
-                            decoration: InputDecoration(
-                              labelText: 'Invoice Number',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: invoiceCtrl,
+                                  decoration: InputDecoration(
+                                    labelText: 'Invoice Number',
+                                    isDense: true,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: paymentMode,
+                                  decoration: InputDecoration(
+                                    labelText: 'Payment Mode',
+                                    isDense: true,
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  items: const ['Bank Transfer', 'Cash', 'Cheque', 'UPI / Online', 'Credit']
+                                      .map((m) => DropdownMenuItem(value: m, child: Text(m, overflow: TextOverflow.ellipsis)))
+                                      .toList(),
+                                  onChanged: (val) => setModalState(() => paymentMode = val!),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: DropdownButtonFormField<int>(
+                              value: selectedSupplierId,
+                              decoration: InputDecoration(
+                                labelText: 'Supplier *',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              items: provider.suppliers.map((s) => DropdownMenuItem(value: s.id, child: Text(s.name, overflow: TextOverflow.ellipsis))).toList(),
+                              onChanged: (val) => setModalState(() => selectedSupplierId = val!),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 1,
-                          child: DropdownButtonFormField<String>(
-                            value: paymentMode,
-                            decoration: InputDecoration(
-                              labelText: 'Payment Mode',
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: TextFormField(
+                              controller: invoiceCtrl,
+                              decoration: InputDecoration(
+                                labelText: 'Invoice Number',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
                             ),
-                            items: const ['Bank Transfer', 'Cash', 'Cheque', 'UPI / Online', 'Credit']
-                                .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                                .toList(),
-                            onChanged: (val) => setModalState(() => paymentMode = val!),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 1,
+                            child: DropdownButtonFormField<String>(
+                              value: paymentMode,
+                              decoration: InputDecoration(
+                                labelText: 'Payment Mode',
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              items: const ['Bank Transfer', 'Cash', 'Cheque', 'UPI / Online', 'Credit']
+                                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                                  .toList(),
+                              onChanged: (val) => setModalState(() => paymentMode = val!),
+                            ),
+                          ),
+                        ],
+                      ),
 
                     const SizedBox(height: 16),
                     Row(
@@ -371,6 +455,99 @@ class PurchaseScreen extends StatelessWidget {
                           separatorBuilder: (_, __) => const Divider(height: 12),
                           itemBuilder: (ctx, idx) {
                             final item = items[idx];
+                            if (isMobileDialog) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButtonFormField<int>(
+                                          value: item['medicine_id'],
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            labelText: 'Medicine Item',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          items: provider.medicines.map((m) => DropdownMenuItem(value: m.id, child: Text(m.name, overflow: TextOverflow.ellipsis))).toList(),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              item['medicine_id'] = val;
+                                              final med = provider.medicines.firstWhere((m) => m.id == val);
+                                              if (med.price > 0) item['unit_price'] = med.price;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      if (items.length > 1)
+                                        IconButton(
+                                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger, size: 20),
+                                          onPressed: () {
+                                            setModalState(() => items.removeAt(idx));
+                                          },
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          initialValue: item['quantity'].toString(),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            labelText: 'Qty',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          keyboardType: TextInputType.number,
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              item['quantity'] = int.tryParse(val) ?? 0;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: TextFormField(
+                                          initialValue: item['unit_price'].toString(),
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            labelText: 'Rate (₹)',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              item['unit_price'] = double.tryParse(val) ?? 0.0;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: TextFormField(
+                                          initialValue: item['batch_no'],
+                                          decoration: InputDecoration(
+                                            isDense: true,
+                                            labelText: 'Batch',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          onChanged: (val) => item['batch_no'] = val,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Item Total: ₹${((item['quantity'] as int) * (item['unit_price'] as double)).toStringAsFixed(2)}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.primary),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
                             return Row(
                               children: [
                                 Expanded(

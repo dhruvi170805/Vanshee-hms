@@ -35,11 +35,11 @@ class AppLayout extends StatelessWidget {
       case 'purchases':
         return const PurchaseScreen();
       case 'patients':
-        return const PatientScreen(initialTabIndex: 0);
+        return const PatientScreen(key: ValueKey('patients_tab_0'), initialTabIndex: 0);
       case 'opd_list':
-        return const PatientScreen(initialTabIndex: 1);
+        return const PatientScreen(key: ValueKey('patients_tab_1'), initialTabIndex: 1);
       case 'indoor_list':
-        return const PatientScreen(initialTabIndex: 2);
+        return const PatientScreen(key: ValueKey('patients_tab_2'), initialTabIndex: 2);
       case 'appointments':
         return const AppointmentScreen();
       case 'doctors':
@@ -92,9 +92,10 @@ class AppLayout extends StatelessWidget {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 20.0 : 8.0),
               child: Row(
                 children: [
+                  // Hamburger menu on mobile
                   if (!isDesktop)
                     Builder(
                       builder: (ctx) => IconButton(
@@ -102,37 +103,68 @@ class AppLayout extends StatelessWidget {
                         onPressed: () => Scaffold.of(ctx).openDrawer(),
                       ),
                     ),
-                  const Icon(Icons.local_hospital, color: AppColors.primary, size: 28),
-                  const SizedBox(width: 12),
-                  const Text('ST. MARY GENERAL HOSPITAL', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary, letterSpacing: 0.5)),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
-                    child: const Text('HMS v1.0', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
-                  const Spacer(),
-                  // User info badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        const CircleAvatar(
-                          radius: 14,
-                          backgroundColor: AppColors.primary,
-                          child: Icon(Icons.person, size: 16, color: Colors.white),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('$userFullName ($userRole)', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                      ],
-                    ),
-                  ),
+                  const Icon(Icons.local_hospital, color: AppColors.primary, size: 26),
                   const SizedBox(width: 8),
+                  if (isDesktop) ...[
+                    const Flexible(
+                      child: Text(
+                        'ST. MARY GENERAL HOSPITAL',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary, letterSpacing: 0.5),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(12)),
+                      child: const Text('HMS v1.0', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ] else ...[
+                    // On mobile just show a short label
+                    const Text(
+                      'HMS Portal',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const Spacer(),
+                  // User info — full badge on desktop, avatar-only on mobile
+                  if (isDesktop)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircleAvatar(
+                            radius: 14,
+                            backgroundColor: AppColors.primary,
+                            child: Icon(Icons.person, size: 16, color: Colors.white),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$userFullName ($userRole)',
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // Compact avatar on mobile — shows user name in tooltip
+                    Tooltip(
+                      message: '$userFullName\n$userRole',
+                      child: const CircleAvatar(
+                        radius: 16,
+                        backgroundColor: AppColors.primary,
+                        child: Icon(Icons.person, size: 18, color: Colors.white),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
                   // Logout Button
                   IconButton(
                     icon: const Icon(Icons.logout_rounded, color: AppColors.danger, size: 20),
@@ -175,7 +207,10 @@ class AppLayout extends StatelessWidget {
               child: _buildSidebar(context, provider),
             ),
           Expanded(
-            child: _getScreen(provider.activeModuleKey),
+            child: KeyedSubtree(
+              key: ValueKey(provider.activeModuleKey),
+              child: _getScreen(provider.activeModuleKey),
+            ),
           ),
         ],
       ),
@@ -184,6 +219,7 @@ class AppLayout extends StatelessWidget {
 
   Widget _buildSidebar(BuildContext context, HmsProvider provider) {
     final grouped = FeatureRegistry.groupedModules;
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
 
     return Container(
       color: AppColors.sidebarBackground,
@@ -251,8 +287,8 @@ class AppLayout extends StatelessWidget {
                           ),
                           onTap: () {
                             provider.setActiveModule(m.key);
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context); // Close drawer on mobile
+                            if (!isDesktop) {
+                              Navigator.of(context).maybePop(); // Close drawer on mobile
                             }
                           },
                         ),

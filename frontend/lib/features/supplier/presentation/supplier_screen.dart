@@ -11,41 +11,74 @@ class SupplierScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<HmsProvider>(context);
 
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header & Add Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Medicine Supplier Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Manage drug distributors, pharmaceutical manufacturers, licenses, and procurement contacts.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Supplier Master',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _showSupplierDialog(context, null),
-                icon: const Icon(Icons.add_business_rounded, size: 18),
-                label: const Text('Add Supplier'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Drug distributors & pharmaceutical manufacturers',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showSupplierDialog(context, null),
+                    icon: const Icon(Icons.add_business_rounded, size: 18),
+                    label: const Text('Add Supplier'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Medicine Supplier Master',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Manage drug distributors, pharmaceutical manufacturers, licenses, and procurement contacts.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showSupplierDialog(context, null),
+                  icon: const Icon(Icons.add_business_rounded, size: 18),
+                  label: const Text('Add Supplier'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 24),
 
@@ -62,8 +95,11 @@ class SupplierScreen extends StatelessWidget {
               runSpacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                SizedBox(
-                  width: 320,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: 200,
+                    maxWidth: isNarrow ? double.infinity : 320,
+                  ),
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: 'Search supplier name, code, contact, phone...',

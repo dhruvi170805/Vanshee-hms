@@ -65,8 +65,8 @@ class _LabReportScreenState extends State<LabReportScreen> {
             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
-            child: SizedBox(
-              width: 460,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -279,40 +279,74 @@ class _LabReportScreenState extends State<LabReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Diagnostic Lab Reports',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Manage pathology tests, blood biochemistry, results reporting, reference ranges, and diagnostic fees.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Diagnostic Lab Reports',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _showReportDialog(),
-                icon: const Icon(Icons.science_rounded, size: 18),
-                label: const Text('New Test Order'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 4),
+                const Text(
+                  'Pathology tests, blood biochemistry, results reporting',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showReportDialog(),
+                    icon: const Icon(Icons.science_rounded, size: 18),
+                    label: const Text('New Test Order'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Diagnostic Lab Reports',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Manage pathology tests, blood biochemistry, results reporting, reference ranges, and diagnostic fees.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showReportDialog(),
+                  icon: const Icon(Icons.science_rounded, size: 18),
+                  label: const Text('New Test Order'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(16),
@@ -326,8 +360,11 @@ class _LabReportScreenState extends State<LabReportScreen> {
               runSpacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                SizedBox(
-                  width: 300,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: 200,
+                    maxWidth: isNarrow ? double.infinity : 300,
+                  ),
                   child: TextField(
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),

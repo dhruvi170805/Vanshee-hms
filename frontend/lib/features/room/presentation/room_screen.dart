@@ -67,8 +67,8 @@ class _RoomScreenState extends State<RoomScreen> {
             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
-            child: SizedBox(
-              width: 420,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -259,128 +259,179 @@ class _RoomScreenState extends State<RoomScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Patient Rooms & Wards Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Track IPD bed allocation, general and private wards, floor plans, and daily stay charges.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Rooms & Wards Master',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () => _showRoomDialog(),
-                icon: const Icon(Icons.meeting_room_rounded, size: 18),
-                label: const Text('Add Room'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                const SizedBox(height: 4),
+                const Text(
+                  'IPD bed allocation, general and private wards, floor plans',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showRoomDialog(),
+                    icon: const Icon(Icons.meeting_room_rounded, size: 18),
+                    label: const Text('Add Room'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Patient Rooms & Wards Master',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Track IPD bed allocation, general and private wards, floor plans, and daily stay charges.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showRoomDialog(),
+                  icon: const Icon(Icons.meeting_room_rounded, size: 18),
+                  label: const Text('Add Room'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
-          // KPI Metric cards
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.hotel_rounded, color: AppColors.primary, size: 24),
+          // KPI Metric cards - responsive wrap
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final double cardWidth = constraints.maxWidth > 700
+                  ? (constraints.maxWidth - 32) / 3
+                  : constraints.maxWidth;
+
+              return Wrap(
+                spacing: 16,
+                runSpacing: 12,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          const Text('Total Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          Text('$_totalBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.hotel_rounded, color: AppColors.primary, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Total Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                Text('$_totalBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: AppColors.successLight, borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.check_circle_outline, color: AppColors.success, size: 24),
+                  SizedBox(
+                    width: cardWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          const Text('Available Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          Text('$_availableBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.success)),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: AppColors.successLight, borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.check_circle_outline, color: AppColors.success, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Available Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                Text('$_availableBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.success)),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: AppColors.accentLight, borderRadius: BorderRadius.circular(8)),
-                        child: const Icon(Icons.person_pin_circle_outlined, color: AppColors.accent, size: 24),
+                  SizedBox(
+                    width: cardWidth,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          const Text('Occupied Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          Text('$_occupiedBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.accent)),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: AppColors.accentLight, borderRadius: BorderRadius.circular(8)),
+                            child: const Icon(Icons.person_pin_circle_outlined, color: AppColors.accent, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Occupied Beds', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                Text('$_occupiedBeds', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.accent)),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 20),
           Container(
@@ -395,8 +446,11 @@ class _RoomScreenState extends State<RoomScreen> {
               runSpacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                SizedBox(
-                  width: 300,
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: 200,
+                    maxWidth: isNarrow ? double.infinity : 300,
+                  ),
                   child: TextField(
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),

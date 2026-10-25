@@ -11,36 +11,72 @@ class ClassificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<HmsProvider>(context);
 
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header title & Add button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Medicine Classification Master', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                  const SizedBox(height: 4),
-                  const Text('Manage medicine categories and therapeutic drug classifications.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showClassificationDialog(context, null),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add Classification'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Classification Master',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Medicine categories & therapeutic drug classifications',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showClassificationDialog(context, null),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Classification'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Medicine Classification Master', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Manage medicine categories and therapeutic drug classifications.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showClassificationDialog(context, null),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Classification'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 24),
 
@@ -52,41 +88,85 @@ class ClassificationScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by category name, code, or description...',
-                      prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
-                      isDense: true,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onChanged: (val) => provider.setClassSearch(val),
+            child: isNarrow
+                ? Column(
+                    children: [
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search by category name, code...',
+                          prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onChanged: (val) => provider.setClassSearch(val),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              value: provider.classStatus,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'all', child: Text('All Statuses')),
+                                DropdownMenuItem(value: 'active', child: Text('Active Only')),
+                                DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) provider.setClassStatus(val);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: AppColors.primary),
+                            onPressed: () => provider.fetchClassifications(),
+                            tooltip: 'Refresh List',
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search by category name, code, or description...',
+                            prefixIcon: const Icon(Icons.search, color: AppColors.textMuted),
+                            isDense: true,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onChanged: (val) => provider.setClassSearch(val),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      DropdownButton<String>(
+                        value: provider.classStatus,
+                        underline: const SizedBox(),
+                        items: const [
+                          DropdownMenuItem(value: 'all', child: Text('All Statuses')),
+                          DropdownMenuItem(value: 'active', child: Text('Active Only')),
+                          DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) provider.setClassStatus(val);
+                        },
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        icon: const Icon(Icons.refresh, color: AppColors.primary),
+                        onPressed: () => provider.fetchClassifications(),
+                        tooltip: 'Refresh List',
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: provider.classStatus,
-                  underline: const SizedBox(),
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All Statuses')),
-                    DropdownMenuItem(value: 'active', child: Text('Active Only')),
-                    DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) provider.setClassStatus(val);
-                  },
-                ),
-                const SizedBox(width: 16),
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: AppColors.primary),
-                  onPressed: () => provider.fetchClassifications(),
-                  tooltip: 'Refresh List',
-                ),
-              ],
-            ),
           ),
 
           const SizedBox(height: 24),
@@ -200,8 +280,8 @@ class ClassificationScreen extends StatelessWidget {
           builder: (context, setState) {
             return AlertDialog(
               title: Text(existing == null ? 'Add Medicine Classification' : 'Edit Medicine Classification', style: const TextStyle(fontWeight: FontWeight.bold)),
-              content: SizedBox(
-                width: 450,
+              content: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 450),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -159,33 +159,32 @@ class _ModuleMasterScreenState extends State<ModuleMasterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
     final selectedRole = _roles.firstWhere(
       (r) => r.id == _selectedRoleId,
       orElse: () => HmsRole(id: 0, roleCode: '', roleName: 'Select a Role'),
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Module & Role Permissions Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Configure granular module visibility and action permissions (View, Create, Edit, Delete) per role.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 560;
+              final titleSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Module & Role Permissions Master',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  const Text('Configure granular module visibility and action permissions (View, Create, Edit, Delete) per role.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ],
+              );
+              final saveBtn = ElevatedButton.icon(
                 onPressed: _isSaving ? null : _savePermissions,
                 icon: _isSaving
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
@@ -197,8 +196,27 @@ class _ModuleMasterScreenState extends State<ModuleMasterScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ),
-            ],
+              );
+              if (isWide) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: titleSection),
+                    const SizedBox(width: 16),
+                    saveBtn,
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleSection,
+                    const SizedBox(height: 12),
+                    saveBtn,
+                  ],
+                );
+              }
+            },
           ),
           const SizedBox(height: 24),
           if (_isLoadingRoles)
@@ -287,8 +305,8 @@ class _ModuleMasterScreenState extends State<ModuleMasterScreen> {
                     if (isWide) const SizedBox(width: 24) else const SizedBox(height: 20),
 
                     // Right: Permission Matrix
-                    Expanded(
-                      flex: isWide ? 1 : 0,
+                    Flexible(
+                      fit: isWide ? FlexFit.tight : FlexFit.loose,
                       child: Container(
                         decoration: BoxDecoration(
                           color: AppColors.surface,
@@ -300,30 +318,30 @@ class _ModuleMasterScreenState extends State<ModuleMasterScreen> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(16.0),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('Permissions for: ${selectedRole.roleName}',
-                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                        const SizedBox(height: 2),
-                                        Text('Tick checkboxes to grant view, create, edit, or delete rights for "${selectedRole.roleCode}".',
-                                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed: _selectAll,
-                                    style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
-                                    child: const Text('Select All', style: TextStyle(fontSize: 12)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton(
-                                    onPressed: _clearAll,
-                                    style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
-                                    child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+                                  Text('Permissions for: ${selectedRole.roleName}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const SizedBox(height: 2),
+                                  Text('Tick checkboxes to grant view, create, edit, or delete rights for "${selectedRole.roleCode}".',
+                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      OutlinedButton(
+                                        onPressed: _selectAll,
+                                        style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+                                        child: const Text('Select All', style: TextStyle(fontSize: 12)),
+                                      ),
+                                      OutlinedButton(
+                                        onPressed: _clearAll,
+                                        style: OutlinedButton.styleFrom(visualDensity: VisualDensity.compact),
+                                        child: const Text('Clear All', style: TextStyle(fontSize: 12)),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

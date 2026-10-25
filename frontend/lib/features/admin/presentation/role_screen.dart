@@ -54,8 +54,8 @@ class _RoleScreenState extends State<RoleScreen> {
           isEdit ? 'Edit Role' : 'Create New System Role',
           style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         ),
-        content: SizedBox(
-          width: 400,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -169,28 +169,27 @@ class _RoleScreenState extends State<RoleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Role Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Define hospital organizational roles: Doctors, Nurses, Receptionists, Patients, and Administrators.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 560;
+              final titleSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Role Master',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  const Text('Define hospital organizational roles: Doctors, Nurses, Receptionists, Patients, and Administrators.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ],
+              );
+              final addBtn = ElevatedButton.icon(
                 onPressed: () => _showRoleDialog(),
                 icon: const Icon(Icons.add_moderator_rounded, size: 18),
                 label: const Text('Add Role'),
@@ -200,8 +199,27 @@ class _RoleScreenState extends State<RoleScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ),
-            ],
+              );
+              if (isWide) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: titleSection),
+                    const SizedBox(width: 16),
+                    addBtn,
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleSection,
+                    const SizedBox(height: 12),
+                    addBtn,
+                  ],
+                );
+              }
+            },
           ),
           const SizedBox(height: 24),
           if (_isLoading)

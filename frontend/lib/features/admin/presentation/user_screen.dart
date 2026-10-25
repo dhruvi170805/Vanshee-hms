@@ -76,8 +76,8 @@ class _UserScreenState extends State<UserScreen> {
             style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
-            child: SizedBox(
-              width: 440,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -238,28 +238,27 @@ class _UserScreenState extends State<UserScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isNarrow = screenWidth < 600;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('User Master',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                    const SizedBox(height: 4),
-                    const Text('Manage hospital staff, physicians, pharmacists, receptionists, and patient access credentials.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 560;
+              final titleSection = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('User Master',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  const Text('Manage hospital staff, physicians, pharmacists, receptionists, and patient access credentials.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                ],
+              );
+              final addBtn = ElevatedButton.icon(
                 onPressed: () => _showUserDialog(),
                 icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                 label: const Text('Add User'),
@@ -269,8 +268,27 @@ class _UserScreenState extends State<UserScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ),
-            ],
+              );
+              if (isWide) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: titleSection),
+                    const SizedBox(width: 16),
+                    addBtn,
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleSection,
+                    const SizedBox(height: 12),
+                    addBtn,
+                  ],
+                );
+              }
+            },
           ),
           const SizedBox(height: 20),
           Container(

@@ -12,38 +12,74 @@ class AppointmentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = Provider.of<HmsProvider>(context);
 
+    final isNarrow = MediaQuery.of(context).size.width < 600;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+      padding: EdgeInsets.all(isNarrow ? 14.0 : 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header & Book button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Clinical Appointments & OPD Tokens',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                  const SizedBox(height: 4),
-                  const Text('Consultation queue, doctor schedules, and token allocations for Ayurvedic and Physiotherapy departments.',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _showBookAppointmentDialog(context),
-                icon: const Icon(Icons.calendar_month_rounded, size: 18),
-                label: const Text('Book Appointment'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          if (isNarrow)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Clinical Appointments',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Consultation queue & doctor token allocations',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showBookAppointmentDialog(context),
+                    icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                    label: const Text('Book Appointment'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Clinical Appointments & OPD Tokens',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                      const SizedBox(height: 4),
+                      const Text('Consultation queue, doctor schedules, and token allocations for Ayurvedic and Physiotherapy departments.',
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () => _showBookAppointmentDialog(context),
+                  icon: const Icon(Icons.calendar_month_rounded, size: 18),
+                  label: const Text('Book Appointment'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 24),
 

@@ -11,7 +11,7 @@ import '../models/appointment_model.dart';
 class ApiService {
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://hms-backend-uyq9.onrender.com/api/v1',
+    defaultValue: 'https://vanshee-hms-full.onrender.com/api/v1',
 
   );
 
